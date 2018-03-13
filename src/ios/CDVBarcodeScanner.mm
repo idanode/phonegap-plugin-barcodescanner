@@ -14,6 +14,7 @@
 //------------------------------------------------------------------------------
 #import "zxing-all-in-one.h"
 #import <Cordova/CDVPlugin.h>
+#import "QRView.h"
 
 
 //------------------------------------------------------------------------------
@@ -111,6 +112,7 @@
 @property (nonatomic, retain) IBOutlet UIView* overlayView;
 @property (nonatomic, retain) UIToolbar * toolbar;
 @property (nonatomic, retain) UIView * reticleView;
+@property (nonatomic, retain) UIImageView *animatedView;
 // unsafe_unretained is equivalent to assign - used to prevent retain cycles in the property below
 @property (nonatomic, unsafe_unretained) id orientationDelegate;
 
@@ -877,7 +879,7 @@ parentViewController:(UIViewController*)parentViewController
 @synthesize shutterPressed = _shutterPressed;
 @synthesize alternateXib   = _alternateXib;
 @synthesize overlayView    = _overlayView;
-
+@synthesize animatedView    = _animatedView;
 //--------------------------------------------------------------------------
 - (id)initWithProcessor:(CDVbcsProcessor*)processor alternateOverlay:(NSString *)alternateXib {
     self = [super init];
@@ -934,6 +936,7 @@ parentViewController:(UIViewController*)parentViewController
 
     [super viewDidAppear:animated];
 }
+
 
 //--------------------------------------------------------------------------
 - (void)startCapturing {
@@ -994,10 +997,15 @@ parentViewController:(UIViewController*)parentViewController
     bounds = CGRectMake(0, 0, bounds.size.width, bounds.size.height);
 
     UIView* overlayView = [[UIView alloc] initWithFrame:bounds];
+   
     overlayView.autoresizesSubviews = YES;
     overlayView.autoresizingMask    = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     overlayView.opaque              = NO;
-
+    
+    QRView *qrView = [[QRView alloc] initWithFrame:bounds];
+    qrView.backgroundColor = [UIColor clearColor];
+    [self.view addSubview:qrView];
+    
     self.toolbar = [[UIToolbar alloc] init];
     self.toolbar.autoresizingMask = UIViewAutoresizingFlexibleWidth;
 
@@ -1063,19 +1071,20 @@ parentViewController:(UIViewController*)parentViewController
     self.toolbar.items = items;
     [overlayView addSubview: self.toolbar];
 
-    UIImage* reticleImage = [self buildReticleImage];
-    self.reticleView = [[[UIImageView alloc] initWithImage:reticleImage] autorelease];
-
-    self.reticleView.opaque           = NO;
-    self.reticleView.contentMode      = UIViewContentModeScaleAspectFit;
-    self.reticleView.autoresizingMask = (UIViewAutoresizing) (0
-        | UIViewAutoresizingFlexibleLeftMargin
-        | UIViewAutoresizingFlexibleRightMargin
-        | UIViewAutoresizingFlexibleTopMargin
-        | UIViewAutoresizingFlexibleBottomMargin)
-    ;
-
-    [overlayView addSubview: self.reticleView];
+//    UIImage* reticleImage = [self buildReticleImage];
+//    self.reticleView = [[[UIImageView alloc] initWithImage:reticleImage] autorelease];
+//
+//    self.reticleView.opaque           = NO;
+//    self.reticleView.contentMode      = UIViewContentModeScaleAspectFit;
+//    self.reticleView.autoresizingMask = (UIViewAutoresizing) (0
+//        | UIViewAutoresizingFlexibleLeftMargin
+//        | UIViewAutoresizingFlexibleRightMargin
+//        | UIViewAutoresizingFlexibleTopMargin
+//        | UIViewAutoresizingFlexibleBottomMargin)
+//    ;
+//
+//    [overlayView addSubview: self.reticleView];
+    
     [self resizeElements];
     return overlayView;
 }
@@ -1083,7 +1092,7 @@ parentViewController:(UIViewController*)parentViewController
 //--------------------------------------------------------------------------
 
 #define RETICLE_SIZE    500.0f
-#define RETICLE_WIDTH    10.0f
+#define RETICLE_WIDTH    2.0f
 #define RETICLE_OFFSET   60.0f
 #define RETICLE_ALPHA     0.4f
 
@@ -1105,9 +1114,10 @@ parentViewController:(UIViewController*)parentViewController
         CGContextAddLineToPoint(context, RETICLE_SIZE-lineOffset, (CGFloat) (0.5*RETICLE_SIZE));
         CGContextStrokePath(context);
     }
-
+    
+    
     if (self.processor.is2D) {
-        UIColor* color = [UIColor colorWithRed:0.0 green:1.0 blue:0.0 alpha:RETICLE_ALPHA];
+        UIColor* color = [UIColor colorWithRed:1.0 green:1.0 blue:1.0 alpha:RETICLE_ALPHA];
         CGContextSetStrokeColorWithColor(context, color.CGColor);
         CGContextSetLineWidth(context, RETICLE_WIDTH);
         CGContextStrokeRect(context,
